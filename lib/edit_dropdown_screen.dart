@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class EditDropdownScreen extends StatefulWidget {
   final String dropdownCollection;
 
-  const EditDropdownScreen({required this.dropdownCollection, Key? key})
+  const EditDropdownScreen({Key? key, required this.dropdownCollection})
       : super(key: key);
 
   @override
@@ -14,23 +14,84 @@ class EditDropdownScreen extends StatefulWidget {
 class _EditDropdownScreenState extends State<EditDropdownScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _controller = TextEditingController();
+  List<DocumentSnapshot> dropdownItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadDropdownItems();
+  }
+
+  Future<void> loadDropdownItems() async {
+    try {
+      final snapshot = await _firestore.collection(widget.dropdownCollection).get();
+      setState(() {
+        dropdownItems = snapshot.docs;
+      });
+    } catch (e) {
+      print('Error loading dropdown items: $e');
+    }
+  }
 
   Future<void> addOption(String name) async {
     if (name.isEmpty) return;
-    print('Attempting to add: $name');
     try {
-      await _firestore
-          .collection(widget.dropdownCollection)
-          .add({'name': name});
-      print('Successfully added: $name');
+      await _firestore.collection(widget.dropdownCollection).add({'name': name});
       _controller.clear();
+      loadDropdownItems(); // Reload items after adding
     } catch (e) {
       print('Error adding option: $e');
     }
   }
 
+  Future<void> editOption(String docId, String newName) async {
+    if (newName.isEmpty) return;
+    try {
+      await _firestore.collection(widget.dropdownCollection).doc(docId).update({'name': newName});
+      loadDropdownItems(); // Reload items after editing
+    } catch (e) {
+      print('Error editing option: $e');
+    }
+  }
+
   Future<void> deleteOption(String docId) async {
-    await _firestore.collection(widget.dropdownCollection).doc(docId).delete();
+    try {
+      await _firestore.collection(widget.dropdownCollection).doc(docId).delete();
+      loadDropdownItems(); // Reload items after deleting
+    } catch (e) {
+      print('Error deleting option: $e');
+    }
+  }
+
+  Future<String?> showEditDialog(BuildContext context, String currentName) async {
+    final TextEditingController controller = TextEditingController(text: currentName);
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit Dropdown Item'),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(labelText: 'Enter new name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(null); // Cancel
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(controller.text); // Save
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -43,48 +104,44 @@ class _EditDropdownScreenState extends State<EditDropdownScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: InputDecoration(
-                      labelText: 'Add Option',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8),
-                ElevatedButton(
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                labelText: 'Add new option',
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.add),
                   onPressed: () => addOption(_controller.text),
-                  child: Text('Add'),
                 ),
-              ],
+              ),
             ),
           ),
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream:
-                  _firestore.collection(widget.dropdownCollection).snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
-                }
+            child: ListView.builder(
+              itemCount: dropdownItems.length,
+              itemBuilder: (context, index) {
+                final doc = dropdownItems[index];
+                final name = doc['name'] ?? 'Unnamed';
 
-                final docs = snapshot.data!.docs;
-
-                return ListView.builder(
-                  itemCount: docs.length,
-                  itemBuilder: (context, index) {
-                    final doc = docs[index];
-                    return ListTile(
-                      title: Text(doc['name']),
-                      trailing: IconButton(
+                return ListTile(
+                  title: Text(name),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () async {
+                          final newName = await showEditDialog(context, name);
+                          if (newName != null) {
+                            await editOption(doc.id, newName);
+                          }
+                        },
+                      ),
+                      IconButton(
                         icon: Icon(Icons.delete, color: Colors.red),
                         onPressed: () => deleteOption(doc.id),
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 );
               },
             ),
