@@ -62,38 +62,6 @@ class _DropdownManagerState extends State<DropdownManager> {
     }
   }
 
-  Future<String?> showEditDialog(BuildContext context, String currentName) async {
-  final TextEditingController controller = TextEditingController(text: currentName);
-
-  return showDialog<String>(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: Text('Edit Name'),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(labelText: 'Enter new name'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(null); // Cancel
-            },
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(controller.text); // Save
-            },
-            child: Text('Save'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
-
   Future<void> addSubtask(String taskId) async {
     final subtaskName = 'Subtask ${DateTime.now().millisecondsSinceEpoch}';
     try {
@@ -106,6 +74,37 @@ class _DropdownManagerState extends State<DropdownManager> {
     } catch (e) {
       print('Error adding subtask: $e');
     }
+  }
+
+  Future<String?> showEditDialog(BuildContext context, String currentName) async {
+    final TextEditingController controller = TextEditingController(text: currentName);
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit Name'),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(labelText: 'Enter new name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(null); // Cancel
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(controller.text); // Save
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -218,8 +217,7 @@ class _DropdownManagerState extends State<DropdownManager> {
               }).toList();
 
               if (taskDocs.isEmpty) {
-                return Center(
-                    child: Text('No tasks found for selected dropdowns'));
+                return Center(child: Text('No tasks found for selected dropdowns'));
               }
 
               return ListView.builder(
@@ -244,14 +242,32 @@ class _DropdownManagerState extends State<DropdownManager> {
                         Text(taskName),
                       ],
                     ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () async {
-                        await _firestore
-                            .collection('tasks')
-                            .doc(taskDocs[index].id)
-                            .delete();
-                      },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () async {
+                            final newName =
+                                await showEditDialog(context, taskName);
+                            if (newName != null) {
+                              await _firestore
+                                  .collection('tasks')
+                                  .doc(taskDocs[index].id)
+                                  .update({'taskName': newName});
+                            }
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            await _firestore
+                                .collection('tasks')
+                                .doc(taskDocs[index].id)
+                                .delete();
+                          },
+                        ),
+                      ],
                     ),
                     children: [
                       StreamBuilder<QuerySnapshot>(
@@ -270,16 +286,15 @@ class _DropdownManagerState extends State<DropdownManager> {
                           return Column(
                             children: [
                               ...subtasks.map((subtaskDoc) {
-                                final subtask =
-                                    subtaskDoc.data() as Map<String, dynamic>;
+                                final subtask = subtaskDoc.data()
+                                    as Map<String, dynamic>;
                                 final subtaskName =
                                     subtask['name'] ?? 'Unnamed Subtask';
                                 final subtaskCompleted =
                                     subtask['completed'] ?? false;
 
                                 return Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 45.0), // Adjust the padding here
+                                  padding: const EdgeInsets.only(left: 16.0),
                                   child: ListTile(
                                     leading: Checkbox(
                                       value: subtaskCompleted,
@@ -302,7 +317,7 @@ class _DropdownManagerState extends State<DropdownManager> {
                                           onPressed: () async {
                                             final newName =
                                                 await showEditDialog(
-                                                    context, subtask['name']);
+                                                    context, subtaskName);
                                             if (newName != null) {
                                               await _firestore
                                                   .collection('tasks')
