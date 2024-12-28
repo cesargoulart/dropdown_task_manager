@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "136855098907",
+    "firebase_url": "https://work-7dc75-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "work-7dc75",
+    "storage_bucket": "work-7dc75.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:136855098907:android:b6a80386e898f643264abe",
+        "android_client_info": {
+          "package_name": "com.example.dropdown_task_manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKribEBbTsgvV_FQD-KVWy4QNJnUaH_00"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

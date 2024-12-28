@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "864721667530",
+    "project_id": "work3-e038b",
+    "storage_bucket": "work3-e038b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:864721667530:android:8063b95b1bb589b50f3b33",
+        "android_client_info": {
+          "package_name": "com.example.dropdown_task_manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSkcMLqGRbIGGClbSmk3TAMcMXvX1qNcE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
