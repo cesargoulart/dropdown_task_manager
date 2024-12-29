@@ -24,10 +24,12 @@ class _EditDropdownScreenState extends State<EditDropdownScreen> {
 
   Future<void> loadDropdownItems() async {
     try {
-      final snapshot = await _firestore.collection(widget.dropdownCollection).get();
+      final snapshot =
+          await _firestore.collection(widget.dropdownCollection).get();
       setState(() {
         dropdownItems = snapshot.docs;
       });
+      print('Dropdown items reloaded');
     } catch (e) {
       print('Error loading dropdown items: $e');
     }
@@ -36,7 +38,9 @@ class _EditDropdownScreenState extends State<EditDropdownScreen> {
   Future<void> addOption(String name) async {
     if (name.isEmpty) return;
     try {
-      await _firestore.collection(widget.dropdownCollection).add({'name': name});
+      await _firestore
+          .collection(widget.dropdownCollection)
+          .add({'name': name});
       _controller.clear();
       loadDropdownItems(); // Reload items after adding
     } catch (e) {
@@ -47,7 +51,12 @@ class _EditDropdownScreenState extends State<EditDropdownScreen> {
   Future<void> editOption(String docId, String newName) async {
     if (newName.isEmpty) return;
     try {
-      await _firestore.collection(widget.dropdownCollection).doc(docId).update({'name': newName});
+      print('Editing document $docId with new name: $newName');
+      await _firestore
+          .collection(widget.dropdownCollection)
+          .doc(docId)
+          .update({'name': newName});
+      print('Document updated successfully');
       loadDropdownItems(); // Reload items after editing
     } catch (e) {
       print('Error editing option: $e');
@@ -56,15 +65,20 @@ class _EditDropdownScreenState extends State<EditDropdownScreen> {
 
   Future<void> deleteOption(String docId) async {
     try {
-      await _firestore.collection(widget.dropdownCollection).doc(docId).delete();
+      await _firestore
+          .collection(widget.dropdownCollection)
+          .doc(docId)
+          .delete();
       loadDropdownItems(); // Reload items after deleting
     } catch (e) {
       print('Error deleting option: $e');
     }
   }
 
-  Future<String?> showEditDialog(BuildContext context, String currentName) async {
-    final TextEditingController controller = TextEditingController(text: currentName);
+  Future<String?> showEditDialog(
+      BuildContext context, String currentName) async {
+    final TextEditingController controller =
+        TextEditingController(text: currentName);
 
     return showDialog<String>(
       context: context,
